@@ -44,7 +44,6 @@ def mutate(chromosome, mutation_rate=0.02):
 
 
 def run_genetic_algorithm():
-    
     run = wandb.init(
         project='Capacitated-Vehicle-Routing',
         job_type='genetic_algorithm',

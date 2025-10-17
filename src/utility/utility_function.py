@@ -49,3 +49,43 @@ def fitness_function(chromosome, dist_matrix, demands, vehicle_capacity):
     routes = split_routes(chromosome, demands, vehicle_capacity)
     total_cost = sum(calculate_route_cost(route, dist_matrix) for route in routes)
     return 1 / total_cost  # minimize distance
+
+
+
+def selection(population, fitnesses):
+    """
+    Tournament selection: randomly pick two and return the fitter one.
+    """
+    i, j = random.sample(range(len(population)), 2)
+    return population[i] if fitnesses[i] > fitnesses[j] else population[j], \
+           population[j] if fitnesses[i] > fitnesses[j] else population[i]
+
+
+def crossover(parent1, parent2):
+    """
+    Ordered crossover (OX): preserves order and position of many genes.
+    """
+    start, end = sorted(random.sample(range(len(parent1)), 2))
+    child = [None] * len(parent1)
+    child[start:end] = parent1[start:end]
+
+    # fill remaining positions with order from parent2
+    ptr = 0
+    for gene in parent2:
+        if gene not in child:
+            while child[ptr] is not None:
+                ptr += 1
+            child[ptr] = gene
+    return child
+
+
+def mutate(chromosome, mutation_rate):
+    """
+    Swap mutation: randomly swaps two positions with given mutation rate.
+    """
+    chrom = chromosome[:]
+    for i in range(len(chrom)):
+        if random.random() < mutation_rate:
+            j = random.randint(0, len(chrom) - 1)
+            chrom[i], chrom[j] = chrom[j], chrom[i]
+    return chrom

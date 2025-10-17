@@ -116,11 +116,11 @@ def run_genetic_algorithm():
     np.save("best_solution.npy", np.array(best_solution))
     np.save("fitness_progress.npy", np.array(fitness_progress))
 
-    artifact = run.Artifact("GA_Model", type="model", description="Best GA solution for CVRP")
+    artifact = wandb.Artifact("GA_Model", type="model", description="Best GA solution for CVRP")
     artifact.add_file("best_solution.npy")
     artifact.add_file("fitness_progress.npy")
     artifact.add_file("ga_convergence.png")
-    run.log_artifact(artifact)
+    wandb.log_artifact(artifact)
 
     wandb.finish()
 

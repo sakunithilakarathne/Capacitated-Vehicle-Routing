@@ -83,18 +83,18 @@ def data_preprocessing():
     print(f"Average demand: {demands[1:,1].mean():.2f}")
 
     # # Plot coordinates
-    # plt.figure(figsize=(8,6))
-    # plt.scatter(coords[1:,1], coords[1:,2], c='blue', label='Customers')
-    # plt.scatter(coords[0,1], coords[0,2], c='red', marker='s', s=100, label='Depot')
-    # for i in range(1, len(coords)):
-    #     plt.text(coords[i,1]+0.5, coords[i,2]+0.5, str(int(coords[i,0])), fontsize=8)
-    # plt.title(f"{name} - Customer Distribution")
-    # plt.xlabel("X Coordinate")
-    # plt.ylabel("Y Coordinate")
-    # plt.legend()
-    # plt.grid(True)
-    # plt.tight_layout()
-    # plt.show()
+    plt.figure(figsize=(8,6))
+    plt.scatter(coords[1:,1], coords[1:,2], c='blue', label='Customers')
+    plt.scatter(coords[0,1], coords[0,2], c='red', marker='s', s=100, label='Depot')
+    for i in range(1, len(coords)):
+        plt.text(coords[i,1]+0.5, coords[i,2]+0.5, str(int(coords[i,0])), fontsize=8)
+    plt.title(f"{name} - Customer Distribution")
+    plt.xlabel("X Coordinate")
+    plt.ylabel("Y Coordinate")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
 
     # Save distance matrix for later use
     np.save(DIST_MATRIX_PATH, dist_matrix)

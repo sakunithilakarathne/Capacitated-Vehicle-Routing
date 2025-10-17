@@ -50,6 +50,7 @@ def run_genetic_algorithm():
     
     raw_artifact = run.use_artifact('scsthilakarathne-nibm/Capacitated-Vehicle-Routing/CVRP_Dataset:v0', type='dataset')
     raw_artifact_dir = raw_artifact.download()
+    print(f"Artifact downloaded to: {raw_artifact_dir}")
 
 
     dist_matrix, demands, coords = load_preprocessed_data(raw_artifact_dir)

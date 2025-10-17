@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 def load_preprocessed_data(artifact_dir):
     """Load preprocessed CVRP data from artifact directory"""
-    dist_matrix = np.load(f"{artifact_dir}/distance_matrix.npy")
+    dist_matrix = np.load(f"{artifact_dir}/dist_matrix.npy")
     demands = np.load(f"{artifact_dir}/demands.npy")
     coords = np.load(f"{artifact_dir}/coords.npy")
     return dist_matrix, demands, coords

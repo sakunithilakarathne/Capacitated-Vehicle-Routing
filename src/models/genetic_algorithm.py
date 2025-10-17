@@ -43,28 +43,40 @@ def mutate(chromosome, mutation_rate=0.02):
     return chromosome
 
 
-
 def run_genetic_algorithm():
-
-    run = wandb.init(project='Capacitated-Vehicle-Routing', job_type='genetic_algorithm', name='GA_CVRP_Run')
     
-    raw_artifact = run.use_artifact('scsthilakarathne-nibm/Capacitated-Vehicle-Routing/CVRP_Dataset:v0', type='dataset')
+    run = wandb.init(
+        project='Capacitated-Vehicle-Routing',
+        job_type='genetic_algorithm',
+        name='GA_CVRP_Run',
+        config={
+            "population_size": pop_size,
+            "num_generations": num_generations,
+            "mutation_rate": mutation_rate,
+            "crossover_rate": crossover_rate
+        }
+    )
+    
+    # --- Load preprocessed data from artifact ---
+    raw_artifact = run.use_artifact(
+        'scsthilakarathne-nibm/Capacitated-Vehicle-Routing/CVRP_Dataset:v0',
+        type='dataset'
+    )
     raw_artifact_dir = raw_artifact.download()
-    print(f"Artifact downloaded to: {raw_artifact_dir}")
-
+    print(f"✅ Artifact downloaded to: {raw_artifact_dir}")
 
     dist_matrix, demands, coords = load_preprocessed_data(raw_artifact_dir)
-    vehicle_capacity = int(demands[:, 1].max() * 5)  # Approximation
+    vehicle_capacity = int(demands[:, 1].max() * 5)
     n_customers = len(demands) - 1
     customers = list(range(1, n_customers + 1))
 
-    # Initialize population
+    # --- Initialize population ---
     population = [random.sample(customers, len(customers)) for _ in range(pop_size)]
-
     best_fitness = 0
     best_solution = None
     fitness_progress = []
 
+    # --- GA main loop ---
     for gen in tqdm(range(num_generations), desc="Running GA"):
         fitnesses = [fitness_function(ch, dist_matrix, demands, vehicle_capacity) for ch in population]
         new_population = []
@@ -76,7 +88,6 @@ def run_genetic_algorithm():
                 c2 = crossover(p2, p1)
             else:
                 c1, c2 = p1[:], p2[:]
-
             c1 = mutate(c1, mutation_rate)
             c2 = mutate(c2, mutation_rate)
             new_population.extend([c1, c2])
@@ -90,18 +101,35 @@ def run_genetic_algorithm():
             best_fitness = gen_best_fitness
             best_solution = population[np.argmax(fitnesses)]
 
+        # Log intermediate generation data
         run.log({"generation": gen, "best_fitness": best_fitness})
 
-    best_routes = split_routes(best_solution, demands, vehicle_capacity)
+    # --- Post GA Evaluation ---
     best_distance = 1 / best_fitness
+    best_routes = split_routes(best_solution, demands, vehicle_capacity)
+    num_routes = len(best_routes)
+    route_lengths = [len(route) - 2 for route in best_routes]  # exclude depots
 
-    print(f"\n Best routes:", best_routes)
-    # Optionally, log routes to wandb
-    run.log({"best_routes": best_routes})
+    # Print summary
+    print("\n✅ GA Optimization Complete")
+    print(f"Best Fitness: {best_fitness:.5f}")
+    print(f"Best Total Distance: {best_distance:.2f}")
+    print(f"Number of Routes (Vehicles Used): {num_routes}")
+    print(f"Average Customers per Route: {np.mean(route_lengths):.2f}")
+    print(f"Best Customer Order:\n{best_solution}")
+    print(f"Best Routes: {best_routes}")
 
-    print(f"\n✅ Best total distance: {best_distance:.2f}")
+    # --- Log final metrics to W&B ---
+    run.log({
+        "final_best_fitness": best_fitness,
+        "final_total_distance": best_distance,
+        "num_routes": num_routes,
+        "avg_customers_per_route": np.mean(route_lengths),
+        "best_customer_order": best_solution,
+        "best_routes": best_routes
+    })
 
-    # Plot convergence
+    # --- Plot convergence ---
     plt.figure(figsize=(8, 5))
     plt.plot(fitness_progress)
     plt.title("GA Convergence - Fitness over Generations")
@@ -112,16 +140,26 @@ def run_genetic_algorithm():
     plt.savefig("ga_convergence.png")
     wandb.log({"GA Convergence": wandb.Image("ga_convergence.png")})
 
-    # Save results as artifact
+    # --- Save outputs as W&B artifact ---
     np.save("best_solution.npy", np.array(best_solution))
     np.save("fitness_progress.npy", np.array(fitness_progress))
 
-    artifact = wandb.Artifact("GA_Model", type="model", description="Best GA solution for CVRP")
+    artifact = wandb.Artifact(
+        "GA_Model",
+        type="model",
+        description="Best GA solution for CVRP"
+    )
     artifact.add_file("best_solution.npy")
     artifact.add_file("fitness_progress.npy")
     artifact.add_file("ga_convergence.png")
     wandb.log_artifact(artifact)
 
+    # --- Optional: Table for visual logging ---
+    route_table = wandb.Table(columns=["Route #", "Customers"])
+    for i, route in enumerate(best_routes):
+        route_table.add_data(i + 1, str(route))
+    wandb.log({"GA_Routes_Table": route_table})
+
     wandb.finish()
 
-    return best_solution, best_distance, fitness_progress
+    return best_solution, best_distance, fitness_progress, best_routes

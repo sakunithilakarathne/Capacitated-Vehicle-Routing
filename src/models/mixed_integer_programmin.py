@@ -93,8 +93,10 @@ def run_cvrp_mip():
     # --- Log metrics to W&B ---
     wandb.log(metrics)
 
-    # Save routes and objective as artifact
-    np.save("mip_best_routes.npy", best_routes, allow_pickle=True)
+
+    # Save MIP routes as numpy object array
+    np.save("mip_best_routes.npy", np.array(best_routes, dtype=object), allow_pickle=True)
+    # To load - best_routes = np.load("mip_best_routes.npy", allow_pickle=True)
     artifact_out = wandb.Artifact("MIP_CVRP_Solution", type="model", description="MIP solution for CVRP")
     artifact_out.add_file("mip_best_routes.npy")
     wandb.log_artifact(artifact_out)
